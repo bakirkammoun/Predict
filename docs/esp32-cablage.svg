@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">Schéma de câblage ESP32 PrédiMaint avec DHT22 et SW-420</title>
+  <desc id="desc">Schéma basse tension : DHT22 vers GPIO 4, SW-420 vers GPIO 27, alimentation 3,3 volts et masse commune. L'ACS712 est montré non connecté au GPIO 34 tant que la tension de sortie n'a pas été vérifiée.</desc>
+  <defs>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #172033; }
+      .small { font-size: 17px; }
+      .label { font-size: 20px; font-weight: 600; }
+      .title { font-size: 34px; font-weight: 700; }
+      .sub { font-size: 19px; fill: #667085; }
+      .pin { font-size: 18px; font-weight: 700; }
+      .wire { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .panel { fill: #fff; stroke: #e3e8ef; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#667085"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="900" fill="#f5f7fa"/>
+  <text x="600" y="58" text-anchor="middle" class="title">Câblage des capteurs — ESP32 PrédiMaint</text>
+  <text x="600" y="92" text-anchor="middle" class="sub">Schéma basse tension • Débrancher l’USB avant tout câblage</text>
+
+  <!-- ESP32 board -->
+  <rect x="430" y="145" width="340" height="570" rx="32" fill="#173b70"/>
+  <rect x="462" y="184" width="276" height="440" rx="20" fill="#214f8b" stroke="#83a7d6" stroke-width="2"/>
+  <text x="600" y="166" text-anchor="middle" fill="#fff" class="label">CARTE ESP32</text>
+  <rect x="517" y="295" width="166" height="172" rx="18" fill="#173b70" stroke="#9cbbdf" stroke-width="2"/>
+  <text x="600" y="365" text-anchor="middle" fill="#fff" font-size="28" font-weight="700">ESP32</text>
+  <text x="600" y="400" text-anchor="middle" fill="#cfe0f5" class="small">Wi-Fi / MQTT</text>
+  <rect x="550" y="634" width="100" height="45" rx="7" fill="#c9d3df"/>
+  <rect x="576" y="644" width="48" height="26" rx="4" fill="#53657b"/>
+  <text x="600" y="701" text-anchor="middle" fill="#e8eff8" font-size="14">USB</text>
+
+  <!-- Pin labels and terminals -->
+  <g fill="#fff" stroke="#cbd5e1" stroke-width="2">
+    <circle cx="430" cy="225" r="8"/><circle cx="430" cy="285" r="8"/>
+    <circle cx="430" cy="345" r="8"/><circle cx="430" cy="405" r="8"/>
+    <circle cx="430" cy="465" r="8"/><circle cx="430" cy="525" r="8"/>
+    <circle cx="430" cy="585" r="8"/>
+    <circle cx="770" cy="225" r="8"/><circle cx="770" cy="285" r="8"/>
+    <circle cx="770" cy="345" r="8"/><circle cx="770" cy="405" r="8"/>
+    <circle cx="770" cy="465" r="8"/><circle cx="770" cy="525" r="8"/>
+    <circle cx="770" cy="585" r="8"/>
+  </g>
+  <text x="452" y="231" fill="#fff" class="pin">3V3</text>
+  <text x="452" y="291" fill="#fff" class="pin">GPIO 4</text>
+  <text x="452" y="351" fill="#fff" class="pin">GPIO 27</text>
+  <text x="452" y="411" fill="#fff" class="pin">GPIO 34</text>
+  <text x="452" y="471" fill="#fff" class="pin">GND</text>
+  <text x="452" y="531" fill="#fff" class="pin">GND</text>
+  <text x="452" y="591" fill="#fff" class="pin">GND</text>
+  <text x="748" y="231" text-anchor="end" fill="#fff" class="pin">VIN</text>
+  <text x="748" y="291" text-anchor="end" fill="#fff" class="pin">GPIO 18</text>
+  <text x="748" y="351" text-anchor="end" fill="#fff" class="pin">GPIO 19</text>
+  <text x="748" y="411" text-anchor="end" fill="#fff" class="pin">GPIO 21</text>
+  <text x="748" y="471" text-anchor="end" fill="#fff" class="pin">GND</text>
+  <text x="748" y="531" text-anchor="end" fill="#fff" class="pin">GPIO 22</text>
+  <text x="748" y="591" text-anchor="end" fill="#fff" class="pin">GPIO 23</text>
+
+  <!-- DHT22 -->
+  <rect x="65" y="190" width="250" height="195" rx="22" class="panel"/>
+  <rect x="91" y="222" width="82" height="98" rx="12" fill="#e8f1ff" stroke="#1769e0" stroke-width="3"/>
+  <path d="M105 240h54M105 256h54M105 272h54M105 288h54" stroke="#1769e0" stroke-width="4" stroke-linecap="round"/>
+  <text x="202" y="250" class="label">DHT22</text>
+  <text x="202" y="279" class="small">Température</text>
+  <text x="202" y="305" class="small">Humidité</text>
+  <text x="90" y="350" class="small">Face grille vers vous,</text>
+  <text x="90" y="374" class="small">broches vers le bas</text>
+  <circle cx="315" cy="220" r="6" fill="#d83b3b"/>
+  <circle cx="315" cy="260" r="6" fill="#1769e0"/>
+  <circle cx="315" cy="300" r="6" fill="#9ca3af"/>
+  <circle cx="315" cy="340" r="6" fill="#4b5563"/>
+  <text x="286" y="226" text-anchor="end" class="small">1 VCC</text>
+  <text x="286" y="266" text-anchor="end" class="small">2 DATA</text>
+  <text x="286" y="306" text-anchor="end" class="small">3 NC</text>
+  <text x="286" y="346" text-anchor="end" class="small">4 GND</text>
+
+  <!-- SW420 -->
+  <rect x="65" y="445" width="250" height="185" rx="22" class="panel"/>
+  <rect x="95" y="479" width="74" height="90" rx="12" fill="#fff4d6" stroke="#b96a00" stroke-width="3"/>
+  <circle cx="132" cy="512" r="16" fill="none" stroke="#b96a00" stroke-width="4"/>
+  <path d="M121 539h22M132 528v22" stroke="#b96a00" stroke-width="3" stroke-linecap="round"/>
+  <text x="198" y="500" class="label">SW-420</text>
+  <text x="198" y="530" class="small">Détection de</text>
+  <text x="198" y="555" class="small">vibration (DO)</text>
+  <text x="90" y="605" class="small">Sortie numérique</text>
+  <circle cx="315" cy="485" r="6" fill="#d83b3b"/>
+  <circle cx="315" cy="535" r="6" fill="#087e65"/>
+  <circle cx="315" cy="585" r="6" fill="#4b5563"/>
+  <text x="286" y="491" text-anchor="end" class="small">VCC</text>
+  <text x="286" y="541" text-anchor="end" class="small">DO</text>
+  <text x="286" y="591" text-anchor="end" class="small">GND</text>
+
+  <!-- Low-voltage wires -->
+  <path d="M321 220H365V225H422" class="wire" stroke="#d83b3b"/>
+  <path d="M321 260H385V285H422" class="wire" stroke="#1769e0"/>
+  <path d="M321 340H350V465H422" class="wire" stroke="#4b5563"/>
+  <path d="M321 485H375V225H422" class="wire" stroke="#d83b3b" opacity=".8"/>
+  <path d="M321 535H398V345H422" class="wire" stroke="#087e65"/>
+  <path d="M321 585H365V525H422" class="wire" stroke="#4b5563"/>
+
+  <!-- ACS712 warning block -->
+  <rect x="850" y="190" width="290" height="440" rx="22" fill="#fff" stroke="#f2b8b5" stroke-width="2"/>
+  <rect x="850" y="190" width="290" height="62" rx="22" fill="#b42318"/>
+  <path d="M850 230h290v22H850z" fill="#b42318"/>
+  <text x="995" y="230" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">ACS712 — ATTENTION</text>
+  <rect x="890" y="282" width="210" height="90" rx="14" fill="#fff4f2" stroke="#f2b8b5" stroke-width="2"/>
+  <text x="995" y="318" text-anchor="middle" class="label">VCC • OUT • GND</text>
+  <text x="995" y="347" text-anchor="middle" class="small">Module de courant</text>
+  <path d="M890 405H822V225H778" class="wire" stroke="#d83b3b" stroke-dasharray="12 12" opacity=".55"/>
+  <path d="M890 448H825V405H778" class="wire" stroke="#d83b3b" stroke-dasharray="12 12"/>
+  <path d="M890 492H822V465H778" class="wire" stroke="#4b5563" stroke-dasharray="12 12" opacity=".55"/>
+  <path d="M855 425l35 35M890 425l-35 35" stroke="#b42318" stroke-width="7" stroke-linecap="round"/>
+  <text x="995" y="535" text-anchor="middle" fill="#b42318" font-size="18" font-weight="700">Ne pas relier OUT</text>
+  <text x="995" y="560" text-anchor="middle" fill="#b42318" font-size="18" font-weight="700">directement à GPIO 34.</text>
+  <text x="995" y="592" text-anchor="middle" class="small">Vérifier la tension / prévoir</text>
+  <text x="995" y="615" text-anchor="middle" class="small">une adaptation sûre d'abord.</text>
+
+  <!-- Legend and notes -->
+  <rect x="65" y="750" width="1075" height="112" rx="18" fill="#fff" stroke="#e3e8ef" stroke-width="2"/>
+  <text x="92" y="788" class="label">Légende</text>
+  <path d="M202 782h54" class="wire" stroke="#d83b3b"/><text x="267" y="788" class="small">3,3 V</text>
+  <path d="M365 782h54" class="wire" stroke="#1769e0"/><text x="430" y="788" class="small">Signal DHT22 → GPIO 4</text>
+  <path d="M665 782h54" class="wire" stroke="#087e65"/><text x="730" y="788" class="small">Signal SW-420 → GPIO 27</text>
+  <path d="M965 782h54" class="wire" stroke="#4b5563"/><text x="1030" y="788" class="small">GND</text>
+  <text x="92" y="831" fill="#344054" font-size="17" font-weight="600">DHT22 nu : broche 1 = VCC, 2 = DATA, 3 = NC (laisser libre), 4 = GND ; capteur face à vous, broches vers le bas.</text>
+  <text x="92" y="853" fill="#667085" font-size="15">GPIO 34 est l’entrée ADC prévue par le firmware pour l’ACS712 ; son raccordement dépend du module et de sa tension de sortie.</text>
+</svg>

@@ -1,0 +1,22 @@
+# Exemple ACL — ne pas activer tel quel en production sans comptes distincts.
+# Générer un mot de passe : mosquitto_passwd -c passwd backend
+# Dans mosquitto.conf :
+#   allow_anonymous false
+#   password_file /mosquitto/config/passwd
+#   acl_file /mosquitto/config/acl.conf
+
+user backend
+topic read predimaint/devices/+/telemetry
+topic read predimaint/devices/+/status
+topic read predimaint/machines/+/measurements
+topic read predimaint/machines/+/status
+topic write predimaint/devices/+/commands
+topic write predimaint/devices/+/config
+
+# Un ESP32 ne publie que sur son propre identifiant.
+user ESP32-001
+topic write predimaint/devices/ESP32-001/telemetry
+topic write predimaint/devices/ESP32-001/status
+topic write predimaint/machines/MACHINE-001/measurements
+topic read predimaint/devices/ESP32-001/commands
+topic read predimaint/devices/ESP32-001/config
