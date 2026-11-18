@@ -45,9 +45,18 @@ interventionsRouter.get(
     if (req.query.technicianId) q.assignedTechnicianId = req.query.technicianId;
     if (req.user!.role === "technician") q.assignedTechnicianId = req.user!.id;
     if (req.query.from || req.query.to) {
-      q.scheduledAt = {};
-      if (req.query.from) (q.scheduledAt as Record<string, Date>).$gte = new Date(String(req.query.from));
-      if (req.query.to) (q.scheduledAt as Record<string, Date>).$lte = new Date(String(req.query.to));
+      const dateRange: Record<string, Date> = {};
+      if (req.query.from) dateRange.$gte = new Date(String(req.query.from));
+      if (req.query.to) dateRange.$lte = new Date(String(req.query.to));
+      if (req.query.calendar === "true") {
+        q.$or = [
+          { status: { $ne: "completed" }, scheduledAt: dateRange },
+          { status: "completed", endedAt: dateRange },
+          { status: "completed", scheduledAt: dateRange, endedAt: { $exists: false } },
+        ];
+      } else {
+        q.scheduledAt = dateRange;
+      }
     }
     const [data, total] = await Promise.all([
       Intervention.find(q)

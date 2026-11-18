@@ -6,6 +6,7 @@ import { connectTestDb, disconnectTestDb, clearTestDb } from "./mongo.js";
 import { User } from "../models/User.js";
 import { Device } from "../models/Device.js";
 import { Machine, defaultThresholds } from "../models/Machine.js";
+import { Intervention } from "../models/Intervention.js";
 import { Alert } from "../models/Alert.js";
 import { Measurement } from "../models/Measurement.js";
 import { Notification } from "../models/Notification.js";
@@ -479,6 +480,59 @@ describe("intégration API / MongoDB", () => {
       .send({ status: "completed", diagnosis: "Palier à remplacer", actions: "Contrôle", observations: "RAS" });
     expect(done.status).toBe(200);
     expect(done.body.data.status).toBe("completed");
+  });
+
+  it("inclut les interventions terminées au calendrier selon leur date de fin", async () => {
+    const { tech } = await seedUsers();
+    const { machine } = await seedMachine(String(tech._id));
+    const [completedInMonth, activeInMonth, completedAfterMonth, completedWithoutEnd] =
+      await Intervention.create([
+        {
+          reference: "INT-CALENDAR-DONE-IN",
+          machineId: machine._id,
+          type: "corrective",
+          problemDescription: "Terminée pendant le mois",
+          status: "completed",
+          scheduledAt: new Date("2026-10-28T10:00:00.000Z"),
+          endedAt: new Date("2026-11-12T12:00:00.000Z"),
+        },
+        {
+          reference: "INT-CALENDAR-ACTIVE",
+          machineId: machine._id,
+          type: "preventive",
+          problemDescription: "Planifiée pendant le mois",
+          status: "todo",
+          scheduledAt: new Date("2026-11-14T10:00:00.000Z"),
+        },
+        {
+          reference: "INT-CALENDAR-DONE-AFTER",
+          machineId: machine._id,
+          type: "inspection",
+          problemDescription: "Terminée le mois suivant",
+          status: "completed",
+          scheduledAt: new Date("2026-11-12T10:00:00.000Z"),
+          endedAt: new Date("2026-12-01T12:00:00.000Z"),
+        },
+        {
+          reference: "INT-CALENDAR-DONE-NO-END",
+          machineId: machine._id,
+          type: "inspection",
+          problemDescription: "Ancienne intervention terminée",
+          status: "completed",
+          scheduledAt: new Date("2026-11-13T10:00:00.000Z"),
+        },
+      ]);
+    const token = await tokenFor("manager@gmail.com");
+    const response = await request(app)
+      .get("/api/v1/interventions?calendar=true&from=2026-11-01T00:00:00.000Z&to=2026-11-30T23:59:59.999Z&limit=100")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    const ids = response.body.data.map((item: { _id: string }) => item._id);
+    expect(ids).toContain(String(completedInMonth._id));
+    expect(ids).toContain(String(activeInMonth._id));
+    expect(ids).toContain(String(completedWithoutEnd._id));
+    expect(ids).not.toContain(String(completedAfterMonth._id));
   });
 
   it("désactive un compte : le jeton n'est plus accepté", async () => {

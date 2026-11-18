@@ -5,9 +5,12 @@ import 'package:predimaint_mobile/core/app_theme.dart';
 import 'package:predimaint_mobile/core/api_client.dart';
 import 'package:predimaint_mobile/core/helpers.dart';
 import 'package:predimaint_mobile/core/session.dart';
+import 'package:predimaint_mobile/features/assistant_ar_page.dart';
 import 'package:predimaint_mobile/features/home_page.dart';
 import 'package:predimaint_mobile/features/interventions_page.dart';
 import 'package:predimaint_mobile/features/machine_detail_page.dart';
+import 'package:predimaint_mobile/features/measurements_page.dart';
+import 'package:predimaint_mobile/features/reports_page.dart';
 import 'package:predimaint_mobile/features/simulation_page.dart';
 import 'package:predimaint_mobile/features/users_page.dart';
 import 'package:predimaint_mobile/main.dart' show HomeShell;
@@ -97,6 +100,99 @@ class _DetailApi extends ApiClient {
     if (path == '/machines/machine-1/measurements' ||
         path == '/interventions') {
       return [];
+    }
+    throw StateError('Unexpected API path: $path');
+  }
+}
+
+class _MobileParityApi extends ApiClient {
+  _MobileParityApi() : super(SessionStore());
+
+  @override
+  Future<dynamic> get(String path, [Map<String, dynamic>? query]) async {
+    if (path == '/machines') {
+      return [
+        {'_id': 'machine-1', 'name': 'Pompe principale', 'code': 'P-01'},
+      ];
+    }
+    if (path == '/machines/machine-1') {
+      return {
+        '_id': 'machine-1',
+        'name': 'Pompe principale',
+        'code': 'P-01',
+        'healthStatus': 'normal',
+        'operationalStatus': 'active',
+        'metricHealth': {
+          'temperature': 'normal',
+          'vibration': 'normal',
+          'current': 'normal',
+        },
+        'thresholds': {
+          'temperature': {
+            'unit': 'C',
+            'warningMax': 60,
+            'criticalMax': 90,
+          },
+          'vibration': {
+            'unit': 'detection',
+            'warningMax': .5,
+            'criticalMax': 2,
+          },
+          'current': {
+            'unit': 'A',
+            'warningMin': 1,
+            'warningMax': 8,
+            'criticalMin': .5,
+            'criticalMax': 12,
+          },
+        },
+        'deviceId': {'hardwareId': 'ESP32-TEST', 'status': 'online'},
+      };
+    }
+    if (path == '/machines/machine-1/measurements') {
+      return [
+        {
+          'measuredAt': DateTime.now().toIso8601String(),
+          'source': 'hardware',
+          'validationStatus': 'valid',
+          'vibration': {'value': 0.3, 'unit': 'g'},
+          'temperature': {'value': 27.1, 'unit': 'C'},
+          'humidity': {'value': 61, 'unit': '%'},
+          'current': {'value': 8.9, 'unit': 'A'},
+        },
+      ];
+    }
+    if (path == '/alerts') return [];
+    if (path == '/reports') {
+      return {
+        'rows': [
+          {
+            'machineId': 'machine-1',
+            'name': 'Pompe principale',
+            'code': 'P-01',
+            'healthStatus': 'normal',
+            'operationalStatus': 'active',
+            'alerts': 2,
+            'interventions': 3,
+            'samples': 40,
+            'availability': .92,
+            'heuristicRisk': 12,
+          },
+        ],
+      };
+    }
+    if (path == '/interventions') {
+      return [
+        {
+          '_id': 'intervention-1',
+          'reference': 'INT-TERMINEE',
+          'type': 'preventive',
+          'status': 'completed',
+          'scheduledAt':
+              DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+          'endedAt': DateTime.now().toIso8601String(),
+        },
+      ];
     }
     throw StateError('Unexpected API path: $path');
   }
@@ -386,6 +482,97 @@ void main() {
     expect(find.text('Liste'), findsOneWidget);
     expect(find.text('Demandes'), findsOneWidget);
     expect(find.text('Planning de maintenance'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('measurements screen displays live sensor readings on mobile',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme('technician'),
+        home: MeasurementsPage(api: _MobileParityApi()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mesures récentes'), findsOneWidget);
+    expect(find.text('Pompe principale · P-01'), findsOneWidget);
+    expect(find.text('27.1 °C'), findsOneWidget);
+    expect(find.text('61 %'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reports screen summarizes accessible machines on mobile',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme('maintenance_manager'),
+        home: ReportsPage(api: _MobileParityApi()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('État par machine'), findsOneWidget);
+    expect(find.text('Pompe principale'), findsOneWidget);
+    expect(find.text('92%'), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('completed intervention is shown on its completion date',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme('technician'),
+        home: InterventionsPage(api: _MobileParityApi()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('INT-TERMINEE'), findsOneWidget);
+    expect(find.textContaining('Terminée'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AR assistant displays API measurements without claiming AR runs',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme('technician'),
+        home: AssistantArPage(api: _MobileParityApi()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Module Unity non disponible'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Assistant AR'), findsOneWidget);
+    expect(find.text('Température'), findsOneWidget);
+    expect(find.text('Vibration'), findsOneWidget);
+    expect(find.text('Courant'), findsOneWidget);
+    expect(find.text('27.1 °C'), findsOneWidget);
+    expect(find.text('DHT22 · Pompe principale'), findsOneWidget);
+    expect(find.text('Humidité · DHT22 : 61 %'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

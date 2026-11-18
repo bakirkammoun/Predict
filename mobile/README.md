@@ -58,3 +58,20 @@ flutter test
 ```
 
 Les notifications listées viennent de `GET /api/v1/notifications`. Aucun fournisseur push n'est configuré.
+
+## Assistant AR
+
+L'écran Assistant AR utilise les machines, seuils, mesures et alertes de l'API
+existante. Les mises à jour utilisent les événements Socket.IO authentifiés
+`measurement:new`, `alert:new`, `alert:updated` et `machine:status`.
+
+La zone caméra reste désactivée tant que le runtime Unity/ARCore et les modèles
+3D mesurés ne sont pas ajoutés et validés sur un appareil Android compatible.
+La base de données associe les valeurs à une machine et à des paramètres de
+télémétrie, pas à des capteurs physiques individuels. L'écran n'affirme donc pas
+qu'un composant a été détecté par caméra.
+
+Les connexions affichées dans le guide sont les GPIO définis par le firmware.
+Elles ne remplacent pas la vérification des variantes et des tensions des
+modules avant branchement. Le guide complet et les modèles 3D attendent les
+références exactes de la carte ESP32 et des modules DHT22, SW-420 et ACS712.

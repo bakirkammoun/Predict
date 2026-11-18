@@ -45,15 +45,37 @@ export function MeasurementsPage() {
     setError("");
     setRows([]);
     setTotal(0);
-    api.get(`/machines/${machineId}/measurements?limit=50&page=${page}&${query}`, { signal: controller.signal }).then((r) => {
-      setRows(r.data.data);
-      setTotal(r.data.meta.total);
-    }).catch((requestError) => {
-      if (!controller.signal.aborted) setError(apiError(requestError));
-    }).finally(() => {
-      if (!controller.signal.aborted) setLoading(false);
-    });
-    return () => controller.abort();
+    let requestInFlight = false;
+    const loadMeasurements = async (initialLoad = false) => {
+      if (requestInFlight || controller.signal.aborted) return;
+      requestInFlight = true;
+      if (initialLoad) setLoading(true);
+      try {
+        const response = await api.get(
+          `/machines/${machineId}/measurements?limit=50&page=${page}&${query}`,
+          { signal: controller.signal },
+        );
+        if (!controller.signal.aborted) {
+          setRows(response.data.data);
+          setTotal(response.data.meta.total);
+          setError("");
+        }
+      } catch (requestError) {
+        if (!controller.signal.aborted) setError(apiError(requestError));
+      } finally {
+        requestInFlight = false;
+        if (initialLoad && !controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    void loadMeasurements(true);
+    const refreshTimer = window.setInterval(() => {
+      void loadMeasurements();
+    }, 5000);
+    return () => {
+      window.clearInterval(refreshTimer);
+      controller.abort();
+    };
   }, [machineId, page, query]);
 
   return (

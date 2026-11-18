@@ -11,6 +11,7 @@ type CalendarIntervention = {
   reference?: string;
   problemDescription?: string;
   scheduledAt?: string;
+  endedAt?: string;
   status?: string;
   priority?: string;
   machineId?: { name?: string; code?: string };
@@ -27,6 +28,12 @@ function dateKey(date: Date) {
 function formatTime(value?: string) {
   if (!value) return "Horaire à confirmer";
   return new Date(value).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function calendarDate(intervention: CalendarIntervention) {
+  return intervention.status === "completed"
+    ? intervention.endedAt ?? intervention.scheduledAt
+    : intervention.scheduledAt;
 }
 
 export function CalendarPage() {
@@ -69,6 +76,7 @@ export function CalendarPage() {
           to: to.toISOString(),
           limit: "100",
           page: "1",
+          calendar: "true",
         });
         const firstPage = await api.get(`/interventions?${query.toString()}`);
         const total = Number(firstPage.data.meta?.total ?? firstPage.data.data.length);
@@ -80,6 +88,7 @@ export function CalendarPage() {
               to: to.toISOString(),
               limit: "100",
               page: String(index + 2),
+              calendar: "true",
             }).toString()}`),
           ),
         );
@@ -120,8 +129,9 @@ export function CalendarPage() {
   const interventionsByDay = useMemo(() => {
     const groups = new Map<string, CalendarIntervention[]>();
     rows.forEach((intervention) => {
-      if (!intervention.scheduledAt) return;
-      const key = dateKey(new Date(intervention.scheduledAt));
+      const eventDate = calendarDate(intervention);
+      if (!eventDate) return;
+      const key = dateKey(new Date(eventDate));
       groups.set(key, [...(groups.get(key) ?? []), intervention]);
     });
     return groups;
@@ -230,19 +240,37 @@ export function CalendarPage() {
                   )}
                 </div>
                 <div className="calendar-day-events">
-                  {dayInterventions.map((intervention) => (
-                    <Link
-                      className={`calendar-event ${intervention.priority === "urgent" ? "calendar-event-urgent" : ""}`}
-                      key={intervention._id}
-                      to={`/interventions/${intervention._id}`}
-                      title={intervention.problemDescription || intervention.reference || "Détail de l’intervention"}
-                    >
-                      <span className="calendar-event-time"><Clock3 size={12} />{formatTime(intervention.scheduledAt)}</span>
-                      <strong>{intervention.reference || "Intervention"}</strong>
-                      <span className="calendar-event-machine">{intervention.machineId?.name || "Machine non précisée"}</span>
-                      <Badge value={intervention.status || "planned"} />
-                    </Link>
-                  ))}
+                  {dayInterventions.map((intervention) => {
+                    const status = intervention.status || "planned";
+                    const eventDate = calendarDate(intervention);
+                    const dateLabel = status === "completed" ? "Terminée" : "Prévue";
+                    const detailTitle = [
+                      intervention.problemDescription || intervention.reference || "Intervention",
+                      intervention.machineId?.name || "Machine non précisée",
+                      `${dateLabel} à ${formatTime(eventDate)}`,
+                    ].join("\n");
+                    return (
+                      <Link
+                        className={[
+                          "calendar-event",
+                          `calendar-event-${status}`,
+                          intervention.priority === "urgent" && status !== "completed" ? "calendar-event-urgent" : "",
+                        ].filter(Boolean).join(" ")}
+                        key={intervention._id}
+                        to={`/interventions/${intervention._id}`}
+                        title={detailTitle}
+                        aria-label={`${intervention.reference || "Intervention"} — ${detailTitle}`}
+                      >
+                        <span className="calendar-event-time">
+                          {status === "completed" ? <CheckCircle2 size={12} /> : <Clock3 size={12} />}
+                          {dateLabel} · {formatTime(eventDate)}
+                        </span>
+                        <strong>{intervention.reference || "Intervention"}</strong>
+                        <span className="calendar-event-machine">{intervention.machineId?.name || "Machine non précisée"}</span>
+                        <Badge value={status} />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             );

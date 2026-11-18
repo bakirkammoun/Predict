@@ -361,8 +361,27 @@ class _InterventionsPageState extends State<InterventionsPage> {
             item['status'] != 'cancelled';
       }).toList();
 
-  DateTime? _scheduledDate(Map item) =>
-      DateTime.tryParse(item['scheduledAt']?.toString() ?? '')?.toLocal();
+  DateTime? _scheduledDate(Map item) {
+    final date = item['status'] == 'completed'
+        ? item['endedAt'] ?? item['scheduledAt']
+        : item['scheduledAt'];
+    return DateTime.tryParse(date?.toString() ?? '')?.toLocal();
+  }
+
+  Color _statusColor(String? status) {
+    switch (status) {
+      case 'completed':
+        return const Color(0xFF16A34A);
+      case 'cancelled':
+        return const Color(0xFF98A2B3);
+      case 'in_progress':
+        return const Color(0xFF2563EB);
+      case 'planned':
+        return const Color(0xFFD18049);
+      default:
+        return brandBlue;
+    }
+  }
 
   Widget _viewSelector() {
     const views = [
@@ -514,13 +533,17 @@ class _InterventionsPageState extends State<InterventionsPage> {
                 final isSelected = date.year == selectedDate.year &&
                     date.month == selectedDate.month &&
                     date.day == selectedDate.day;
-                final hasSchedule = items.any((raw) {
-                  final scheduled = _scheduledDate(raw as Map);
-                  return scheduled != null &&
-                      scheduled.year == date.year &&
-                      scheduled.month == date.month &&
-                      scheduled.day == date.day;
-                });
+                final scheduledItems = items
+                    .where((raw) {
+                      final item = raw as Map;
+                      final scheduled = _scheduledDate(item);
+                      return scheduled != null &&
+                          scheduled.year == date.year &&
+                          scheduled.month == date.month &&
+                          scheduled.day == date.day;
+                    })
+                    .take(3)
+                    .toList();
                 return InkWell(
                   borderRadius: BorderRadius.circular(99),
                   onTap: () => setState(() => selectedDate = date),
@@ -545,13 +568,21 @@ class _InterventionsPageState extends State<InterventionsPage> {
                           ),
                         ),
                       ),
-                      Container(
-                        width: 3,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: hasSchedule ? brandBlue : Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (final raw in scheduledItems)
+                            Container(
+                              width: 3,
+                              height: 3,
+                              margin: const EdgeInsets.symmetric(horizontal: 1),
+                              decoration: BoxDecoration(
+                                color: _statusColor(
+                                    (raw as Map)['status']?.toString()),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -614,6 +645,7 @@ class _InterventionsPageState extends State<InterventionsPage> {
   Widget _scheduleCard(Map item) {
     final scheduledAt = _scheduledDate(item);
     final priority = item['priority']?.toString();
+    final statusColor = _statusColor(item['status']?.toString());
     final dateLabel = scheduledAt == null
         ? 'À planifier'
         : [
@@ -638,11 +670,11 @@ class _InterventionsPageState extends State<InterventionsPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0F3F8),
+                  color: statusColor.withValues(alpha: .1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.precision_manufacturing_outlined,
-                    color: Color(0xFF72809A), size: 22),
+                child: Icon(Icons.precision_manufacturing_outlined,
+                    color: statusColor, size: 22),
               ),
               const SizedBox(width: 9),
               Expanded(
@@ -670,8 +702,8 @@ class _InterventionsPageState extends State<InterventionsPage> {
                     ),
                     Text(
                       dateLabel,
-                      style: const TextStyle(
-                        color: Color(0xFFCF7D49),
+                      style: TextStyle(
+                        color: statusColor,
                         fontSize: 8,
                       ),
                     ),

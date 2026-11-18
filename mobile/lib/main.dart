@@ -5,6 +5,7 @@ import 'core/app_theme.dart';
 import 'core/session.dart';
 import 'features/alert_detail_page.dart';
 import 'features/alerts_page.dart';
+import 'features/assistant_ar_page.dart';
 import 'features/audit_page.dart';
 import 'features/devices_page.dart';
 import 'features/home_page.dart';
@@ -13,8 +14,10 @@ import 'features/interventions_page.dart';
 import 'features/login_page.dart';
 import 'features/machine_detail_page.dart';
 import 'features/machines_page.dart';
+import 'features/measurements_page.dart';
 import 'features/notifications_page.dart';
 import 'features/profile_page.dart';
+import 'features/reports_page.dart';
 import 'features/settings_page.dart';
 import 'features/simulation_page.dart';
 import 'features/users_page.dart';
@@ -41,10 +44,21 @@ class _PrediMaintAppState extends State<PrediMaintApp> {
       final loggingIn = state.matchedLocation == '/login';
       if (!logged && !loggingIn) return '/login';
       if (logged && loggingIn) return '/';
-      const adminOnlyRoutes = {'/users', '/devices', '/settings', '/audit'};
+      const adminOnlyRoutes = {
+        '/users',
+        '/devices',
+        '/settings',
+        '/audit',
+      };
       if (logged &&
           adminOnlyRoutes.contains(state.matchedLocation) &&
           session.user?['role'] != 'admin') {
+        return '/';
+      }
+      if (logged &&
+          state.matchedLocation == '/reports' &&
+          !{'admin', 'maintenance_manager'}
+              .contains(session.user?['role']?.toString())) {
         return '/';
       }
       if (logged &&
@@ -66,6 +80,18 @@ class _PrediMaintAppState extends State<PrediMaintApp> {
           GoRoute(path: '/', builder: (_, __) => TechnicianDashboard(api: api)),
           GoRoute(
               path: '/machines', builder: (_, __) => MachinesPage(api: api)),
+          GoRoute(
+            path: '/measurements',
+            builder: (_, __) => MeasurementsPage(api: api),
+          ),
+          GoRoute(
+            path: '/assistant-ar',
+            builder: (_, __) => AssistantArPage(api: api),
+          ),
+          GoRoute(
+            path: '/reports',
+            builder: (_, __) => ReportsPage(api: api),
+          ),
           GoRoute(
             path: '/machines/:id',
             builder: (_, s) =>
@@ -223,6 +249,10 @@ class HomeShell extends StatelessWidget {
             _NavigationItem(
                 'Interventions', Icons.build_outlined, '/interventions'),
             _NavigationItem(
+                'Assistant AR', Icons.view_in_ar_rounded, '/assistant-ar'),
+            _NavigationItem('Mesures', Icons.sensors_outlined, '/measurements'),
+            _NavigationItem('Rapports', Icons.analytics_outlined, '/reports'),
+            _NavigationItem(
                 'Appareils IoT', Icons.sensors_outlined, '/devices'),
             _NavigationItem(
                 'Utilisateurs', Icons.people_outline_rounded, '/users'),
@@ -244,6 +274,12 @@ class HomeShell extends StatelessWidget {
                     'Alertes', Icons.warning_amber_rounded, '/alerts'),
                 _NavigationItem(
                     'Interventions', Icons.build_outlined, '/interventions'),
+                _NavigationItem(
+                    'Assistant AR', Icons.view_in_ar_rounded, '/assistant-ar'),
+                _NavigationItem(
+                    'Mesures', Icons.sensors_outlined, '/measurements'),
+                _NavigationItem(
+                    'Rapports', Icons.analytics_outlined, '/reports'),
                 _NavigationItem('Notifications', Icons.notifications_outlined,
                     '/notifications'),
                 _NavigationItem(
@@ -252,6 +288,10 @@ class HomeShell extends StatelessWidget {
                     'Mon profil', Icons.person_outline_rounded, '/profile'),
               ]
             : const [
+                _NavigationItem(
+                    'Assistant AR', Icons.view_in_ar_rounded, '/assistant-ar'),
+                _NavigationItem(
+                    'Mesures', Icons.sensors_outlined, '/measurements'),
                 _NavigationItem(
                     'Alertes', Icons.warning_amber_rounded, '/alerts'),
                 _NavigationItem('Notifications', Icons.notifications_outlined,

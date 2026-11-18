@@ -16,12 +16,6 @@ const PARAMETER_LABELS: Record<string, string> = {
   connectivity: "Connectivité",
 };
 
-const PARAMETER_IMAGES: Record<string, string> = {
-  vibration: "/images/factory-automation.jpg",
-  temperature: "/images/sensor-maintenance.jpg",
-  current: "/images/sensor-maintenance.jpg",
-  connectivity: "/images/maintenance-technician.jpg",
-};
 const PAGE_SIZE = 9;
 
 export function AlertsPage() {
@@ -137,92 +131,81 @@ export function AlertsPage() {
             : "Les anomalies détectées sur vos machines apparaîtront ici."}
         />
       ) : (
-        <section className="alerts-list" aria-label="Liste des alertes">
-          {rows.map((alert) => {
-            const machine = alert.machineId as { _id?: string; name?: string; code?: string } | undefined;
-            const severity = String(alert.severity ?? "warning");
-            const alertStatus = String(alert.status ?? "new");
-            const parameter = String(alert.parameter ?? "");
-            const parameterLabel = PARAMETER_LABELS[parameter] ?? parameter;
-            const observedValue = alert.observedValue == null
-              ? (severity === "critical" ? "Critique" : "Vigilance")
-              : `${String(alert.observedValue)} ${String(alert.unit ?? "")}`.trim();
+        <section className="page-table-wrap alerts-table-wrap" aria-label="Tableau des alertes">
+          <table className="alerts-table">
+            <thead>
+              <tr>
+                <th scope="col">Machine</th>
+                <th scope="col">Paramètre</th>
+                <th scope="col">Gravité</th>
+                <th scope="col">Valeur</th>
+                <th scope="col">Seuil</th>
+                <th scope="col">Détectée le</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Observation</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((alert) => {
+                const machine = alert.machineId as { _id?: string; name?: string; code?: string } | undefined;
+                const severity = String(alert.severity ?? "warning");
+                const alertStatus = String(alert.status ?? "new");
+                const parameter = String(alert.parameter ?? "");
+                const parameterLabel = PARAMETER_LABELS[parameter] ?? parameter;
+                const observedValue = alert.observedValue == null
+                  ? (severity === "critical" ? "Critique" : "Vigilance")
+                  : `${String(alert.observedValue)} ${String(alert.unit ?? "")}`.trim();
 
-            return (
-              <article
-                key={String(alert._id)}
-                className={`machine-card alert-card alert-card-${severity}`}
-              >
-                <div className="machine-card-image alert-card-image">
-                  <img
-                    src={PARAMETER_IMAGES[parameter] ?? "/images/factory-automation.jpg"}
-                    alt={`${parameterLabel} — environnement de maintenance industrielle`}
-                    loading="lazy"
-                  />
-                  <span className="machine-card-code">
-                    {machine?.code ?? "ALERTE"}
-                  </span>
-                  <div className="alert-image-badges">
-                    <Badge value={severity} />
-                    <Badge value={alertStatus} />
-                  </div>
-                  <span className="machine-card-illustrative">Illustration</span>
-                </div>
-                <div className="machine-card-body alert-card-body">
-                  <div className="machine-card-heading alert-card-heading">
-                    <div className="min-w-0">
-                      <h2 title={machine?.name ?? "Machine inconnue"}>{machine?.name ?? "Machine inconnue"}</h2>
-                      <p>{parameterLabel}</p>
-                    </div>
-                    <Badge value={severity} />
-                  </div>
-                  <dl className="machine-card-details alert-card-details">
-                    <div>
-                      <dt>Valeur détectée</dt>
-                      <dd>{observedValue}</dd>
-                    </div>
-                    <div>
-                      <dt>Seuil</dt>
-                      <dd>{alert.threshold == null ? "—" : `${String(alert.threshold)} ${String(alert.unit ?? "")}`.trim()}</dd>
-                    </div>
-                    <div>
-                      <dt>Détectée le</dt>
-                      <dd>{when(alert.detectedAt as string)}</dd>
-                    </div>
-                    <div>
-                      <dt>Observation</dt>
-                      <dd className="alert-card-observation">
-                        {String(alert.description ?? "Une anomalie a été détectée.")}
-                      </dd>
-                    </div>
-                  </dl>
-                  <div className="alert-card-actions alert-card-footer">
-                  {alertStatus === "new" && (
-                    <button className="alert-action-link" onClick={() => updateStatus(alert._id, "acknowledged")}>
-                      Reconnaître <Check size={15} />
-                    </button>
-                  )}
-                  {alertStatus !== "resolved" && (
-                    <button className="alert-action-link" onClick={() => updateStatus(alert._id, "resolved")}>
-                      Résoudre <ArrowRight size={15} />
-                    </button>
-                  )}
-                  {hasRole("admin", "maintenance_manager") && !alert.interventionId && (
-                    <button className="alert-action-link" onClick={() => createIntervention(alert)}>
-                      Intervention <Wrench size={15} />
-                    </button>
-                  )}
-                  {alertStatus === "resolved" && (
-                    <span className="alert-resolved-label">
-                      <Clock3 size={15} />
-                      Alerte clôturée
-                    </span>
-                  )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+                return (
+                  <tr key={String(alert._id)}>
+                    <td data-label="Machine">
+                      <div className="alerts-table-machine">
+                        <strong>{machine?.name ?? "Machine inconnue"}</strong>
+                        {machine?.code && <small>{machine.code}</small>}
+                      </div>
+                    </td>
+                    <td data-label="Paramètre">{parameterLabel}</td>
+                    <td data-label="Gravité"><Badge value={severity} /></td>
+                    <td data-label="Valeur">{observedValue}</td>
+                    <td data-label="Seuil">
+                      {alert.threshold == null ? "—" : `${String(alert.threshold)} ${String(alert.unit ?? "")}`.trim()}
+                    </td>
+                    <td className="alerts-table-date" data-label="Détectée le">{when(alert.detectedAt as string)}</td>
+                    <td data-label="Statut"><Badge value={alertStatus} /></td>
+                    <td className="alerts-table-observation" data-label="Observation" title={String(alert.description ?? "")}>
+                      {String(alert.description ?? "Une anomalie a été détectée.")}
+                    </td>
+                    <td data-label="Actions">
+                      <div className="alerts-table-actions">
+                        {alertStatus === "new" && (
+                          <button className="alert-action-link" onClick={() => updateStatus(alert._id, "acknowledged")}>
+                            Reconnaître <Check size={15} />
+                          </button>
+                        )}
+                        {alertStatus !== "resolved" && (
+                          <button className="alert-action-link" onClick={() => updateStatus(alert._id, "resolved")}>
+                            Résoudre <ArrowRight size={15} />
+                          </button>
+                        )}
+                        {hasRole("admin", "maintenance_manager") && !alert.interventionId && (
+                          <button className="alert-action-link" onClick={() => createIntervention(alert)}>
+                            Intervention <Wrench size={15} />
+                          </button>
+                        )}
+                        {alertStatus === "resolved" && (
+                          <span className="alert-resolved-label">
+                            <Clock3 size={15} />
+                            Alerte clôturée
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </section>
       )}
       {!loading && total > PAGE_SIZE && (
